@@ -9,8 +9,9 @@ Python:     python3.6
 import logging
 import random,time
 from multiprocessing import Process
+import threading
 
-from Locks import ReadAndWriteLock,SharedAndMutex
+from pylocks import ReadAndWriteLock,SharedAndMutex
 
 def get_read(row:ReadAndWriteLock):
     """
@@ -46,14 +47,31 @@ def get_write(row:ReadAndWriteLock):
         except Exception as e:
             logging.error(f"写锁测试部分发生错误:{e}")
 
+class ReadThread(threading.Thread):
+    def __init__(self,row:ReadAndWriteLock):
+        self._lock = row
+        super(ReadThread, self).__init__()
+    def run(self):
+        get_read(self._lock)
+
+class WriteThread(ReadThread):
+    def run(self):
+        get_write(self._lock)
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(process)d %(asctime)s %(filename)s [line:%(lineno)d] %(levelname)s %(message)s')
     row = SharedAndMutex()
     task = []
     for i in range(5): # 读锁
-        task.append(Process(target=get_read,args=(row,)))
+        # task.append(Process(target=get_read,args=(row,)))
+        task.append(ReadThread(row))
     for i in range(5):  # 写锁
-        task.append(Process(target=get_write,args=(row,)))
-
+        # task.append(Process(target=get_write,args=(row,)))
+        task.append(WriteThread(row))
     for single in task:
+
         single.start()
+    for single in task:
+        single.join()
+
