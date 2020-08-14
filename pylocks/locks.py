@@ -14,7 +14,7 @@ from .apis import LockInterface, SharedAndMutexInterface
 
 class SharedAndMutex(SharedAndMutexInterface):
     """
-    定义一个资源,尽量在后续的使用中,可以被多种锁复用
+    共享/ 互斥锁  的配对使用,具体实现
     """
 
     def __init__(self, *args, **kwargs):
